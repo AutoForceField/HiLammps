@@ -63,12 +63,25 @@ It can also be used in f-strings:
 from __future__ import annotations
 
 import abc
+import typing
 
 import ase.units as _units
-from ase.calculators.lammps import convert
+from ase.calculators.lammps import convert as _ase_convert
 
 Number = float
-LAMMPS_UNIT_SYSTEMS = (
+
+QuantityType = typing.Literal[
+    "distance",
+    "time",
+    "energy",
+    "force",
+    "velocity",
+    "charge",
+    "mass",
+    "pressure",
+]
+
+UnitType = typing.Literal[
     "real",
     "metal",
     "si",
@@ -76,8 +89,17 @@ LAMMPS_UNIT_SYSTEMS = (
     "electron",
     "micro",
     "nano",
-)
-# Note, we have ignored "lj" units
+    # "lj" is ignored
+]
+
+LAMMPS_UNIT_SYSTEMS = typing.get_args(UnitType)
+
+
+def lammps_factor(quantity: QuantityType, units: UnitType) -> float:
+    """
+    Get the conversion factor from ASE to internal LAMMPS units.
+    """
+    return _ase_convert(1.0, quantity, "ASE", units)
 
 
 class _Float(float):
@@ -225,7 +247,7 @@ class _Convertable(Quantity):
             assert "ase" in self._units
             q = self._name.lower()
             u = _unit.replace("lammps_", "")
-            return convert(1, q, u, "ASE") / self._units["ase"]
+            return _ase_convert(1, q, u, "ASE") / self._units["ase"]
         else:
             raise UnitNotFound(self, unit)
 
@@ -377,7 +399,7 @@ class Pressure(_Convertable):
         "pa": _units.Pascal,
         "gpa": _units.GPa,
         "bar": _units.bar,
-        "atm": convert(1, "pressure", "real", "ASE"),
+        "atm": _ase_convert(1, "pressure", "real", "ASE"),
         "ase": 1,
     }
     _repr_unit: str = "bar"
