@@ -9,17 +9,17 @@ A complete description of a molecule should be given by ("DescriptorType"s):
     - "improper"s
 "bond"s, "angle"s, "dihedral"s, and "improper"s are called "TopologicalType"s.
 
-TODO: float values for bond, angle, dihedral, improper
 A description is considered complete if, given the above descriptors,
 positions of all atoms in the molecule can be determined up to arbitrary
 translations and rotations.
+TODO: Float values for bond, angle, dihedral, improper.
 TODO: Solving positions from descriptors.
 TODO: One-to-one mapping of topological descriptors to positions vs degenaracy.
 
-All "atom"s, "bond"s, etc. are labeled by a integer or string ("LabelType").
+All "atom"s, "bond"s, etc. are labeled by a string ("LabelType").
 In addition to label, "TopologicalType"s contain indices of the atoms in the
 molecule that make that descriptor. The type system is as follows:
-    - LabelType = int | str
+    - LabelType = str
     - AtomType = LabelType
     - BondType = (LabelType, int, int)
     - AngleType = (LabelType, int, int, int)
@@ -55,7 +55,7 @@ topological_types: tuple[TopologicalType, ...] = typing.get_args(
     TopologicalType
 )
 # Type system
-LabelType = int | str
+LabelType = str
 AtomType = LabelType
 BondType = tuple[LabelType, int, int]
 AngleType = tuple[LabelType, int, int, int]
@@ -91,10 +91,10 @@ class MoleculeType(abc.ABC):
 
     # --- Concrete methods ---
 
-    def _get_labels(self, descriptor: DescriptorType) -> tuple[LabelType, ...]:
+    def _get_labels(self, d: DescriptorType) -> tuple[LabelType, ...]:
         raise NotImplementedError
 
-    def _get_extra_per_atom(self, topo: TopologicalType) -> int:
+    def _get_extra_per_atom(self, t: TopologicalType) -> int:
         raise NotImplementedError
 
     def _get_extra_special_per_atom(self) -> int:
@@ -102,9 +102,9 @@ class MoleculeType(abc.ABC):
         raise NotImplementedError
 
 
-def _unique_tuple(
-    labels: typing.Sequence[typing.Any],
-) -> tuple[typing.Any, ...]:
+def _unique_labels_tuple(
+    labels: typing.Sequence[LabelType],
+) -> tuple[LabelType, ...]:
     return tuple(sorted(set(labels)))
 
 
@@ -119,7 +119,7 @@ def _get_box_descriptors(
         t: [] for t in descriptor_types
     }
     extras: dict[TopologicalType, int] = {t: 0 for t in topological_types}
-    extra_special = 0
+    extra_special: int = 0
 
     for arg in args:
         if isinstance(arg, MoleculeType):
@@ -133,7 +133,7 @@ def _get_box_descriptors(
         else:
             descriptors["atom"].append(arg)
 
-    unique_descriptors = {
-        t: _unique_tuple(descriptors[t]) for t in descriptor_types
+    labels = {
+        t: _unique_labels_tuple(descriptors[t]) for t in descriptor_types
     }
-    return unique_descriptors, extras, extra_special
+    return labels, extras, extra_special
