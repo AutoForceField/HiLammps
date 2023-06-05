@@ -1,13 +1,13 @@
 from setuptools import find_packages, setup
 
-with open("hilammps/version.py") as f:
+with open("hlmp/version.py") as f:
     _version: dict[str, str] = {}
     exec(f.read(), _version)
     __version__ = _version["__version__"]
 
 
 setup(
-    name="hilammps",
+    name="hlmp",
     version=__version__,
     author="Amir Hajibabaei",
     author_email="autoforcefield@gmail.com",

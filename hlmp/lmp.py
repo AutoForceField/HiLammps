@@ -13,9 +13,9 @@ import numpy as np
 from lammps import lammps as _lammps
 from mpi4py import MPI
 
-import hilammps.types as types
-from hilammps.mpi import global_random_state
-from hilammps.quantity import QuantityType, UnitType, lammps_factor
+import hlmp.types as types
+from hlmp.mpi import global_random_state
+from hlmp.quant import QuanType, UnitType, lammps_factor
 
 # Type aliases
 IDType = Literal["region", "group", "fix", "compute", "molecule", "dump"]
@@ -37,25 +37,29 @@ class lammps(_lammps):
     def command(self, cmd: str) -> None:
         # Verbose output
         self._cmd_count += 1
-        if self._verbose != "no" and cmd.strip() != "":
+        cmd = cmd.strip()
+        if self._verbose != "no" and cmd != "":
             if self.get_mpi_comm().Get_rank() == 0:
                 # if verbose is "yes", print command
                 # otherwise write to a file with the name
                 # specified by verbose
                 if self._verbose == "yes":
-                    print(f"NEOLAMMPS: {cmd.strip()}")
+                    print(f"NEOLAMMPS: {cmd}")
                 else:
                     mode = "w" if self._cmd_count == 1 else "a"
                     with open(self._verbose, mode) as f:
-                        f.write(f"{cmd.strip()}\n")
+                        f.write(f"{cmd}\n")
+
+        if cmd.startswith("labelmap"):
+            # If a labelmap is defined, store the info
+            # since I don't know how to get it from LAMMPS
+            # TODO: older versions of LAMMPS do not support labelmap
+            self._parse_labelmap_command(f"{cmd}\n")
+            if self.version() < 20230208:
+                cmd = f"# {cmd}"
 
         # Execute the command
         super().command(cmd)
-
-        # If a labelmap is defined, store the info
-        # since I don't know how to get it from LAMMPS
-        if cmd.strip().startswith("labelmap"):
-            self._parse_labelmap_command(cmd)
 
     def commands_list(self, cmds: list[str]) -> None:
         for cmd in cmds:
@@ -101,7 +105,7 @@ class lammps(_lammps):
         raise ValueError(f"Label {label} not found in {descriptor}")
 
 
-class HiLammps:
+class Lammps:
     def __init__(
         self,
         comm: MPI.Intracomm | None = None,
@@ -113,7 +117,7 @@ class HiLammps:
         screen: bool = False,
     ) -> None:
         """
-        Initialize the HiLammps class.
+        Initialize the Lammps class.
 
         Args:
             comm (MPI.Intracom | None, optional): MPI communicator.
@@ -184,7 +188,7 @@ class HiLammps:
         """
         return self.lmp.extract_global("units")
 
-    def get_factor(self, q: QuantityType) -> float:
+    def get_factor(self, q: QuanType) -> float:
         """
         Get the conversion factor from ASE to internal LAMMPS units.
 

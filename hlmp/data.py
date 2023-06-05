@@ -1,6 +1,6 @@
 from ase.data import atomic_masses, atomic_numbers
 
-from hilammps.types import AtomType
+from hlmp.types import AtomType
 
 
 def get_atomic_number(symbol: AtomType) -> int:

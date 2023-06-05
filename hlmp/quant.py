@@ -28,7 +28,7 @@ The Quantity class is a subclass of float and
 therefore can be used as a float. Its value is
 the input value converted to the default unit.
 For example:
-    >>> from hilammps.quantity import Distance
+    >>> from hlmp.quant import Distance
     >>> d = Distance(1.0, "nm")
     >>> isinstance(d, float)
     True
@@ -70,7 +70,7 @@ from ase.calculators.lammps import convert as _ase_convert
 
 Number = float
 
-QuantityType = typing.Literal[
+QuanType = typing.Literal[
     "distance",
     "time",
     "energy",
@@ -95,7 +95,7 @@ UnitType = typing.Literal[
 LAMMPS_UNIT_SYSTEMS = typing.get_args(UnitType)
 
 
-def lammps_factor(quantity: QuantityType, units: UnitType) -> float:
+def lammps_factor(quantity: QuanType, units: UnitType) -> float:
     """
     Get the conversion factor from ASE to internal LAMMPS units.
     """
