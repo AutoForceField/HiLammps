@@ -15,6 +15,6 @@ setup(
     packages=find_packages(),
     python_requires=">=3.7",
     install_requires=["numpy"],
-    url="https://github.com/AutoForceField/HILammps",
+    url="https://github.com/AutoForceField/HiLammps",
     license="MIT",
 )
