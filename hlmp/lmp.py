@@ -13,6 +13,7 @@ import numpy as np
 from lammps import lammps as _lammps
 from mpi4py import MPI
 
+import hlmp.data as atomic_data
 import hlmp.types as types
 from hlmp.mpi import global_random_state
 from hlmp.quant import QuanType, UnitType, lammps_factor
@@ -103,6 +104,9 @@ class lammps(_lammps):
             if l == label:
                 return type
         raise ValueError(f"Label {label} not found in {descriptor}")
+
+    def get_all_atom_labels(self) -> list[types.LabelType]:
+        return list(self._labels["atom"].values())
 
 
 class Lammps:
@@ -239,6 +243,13 @@ class Lammps:
 
         bx, by, bz = (convert(x) for x in boundary)
         self.lmp.command(f"boundary {bx} {by} {bz}")
+
+    def set_atomic_masses(self) -> None:
+        c = self.get_factor("mass")
+        for a in self.lmp.get_all_atom_labels():
+            mass = atomic_data.get_atomic_mass(a)
+            t = self.lmp.get_type("atom", a)
+            self.lmp.command(f"mass {t} {c * mass} # {a}")
 
     def set_timestep(self, timestep: float) -> None:
         """
@@ -496,6 +507,8 @@ class Lammps:
 
         # Labelmap
         for descriptor, labels in descriptors.items():
+            if len(labels) == 0:
+                continue
             labelmap = " ".join(
                 f"{i+1} {label}" for i, label in enumerate(labels)
             )
